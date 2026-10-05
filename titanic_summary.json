@@ -1,0 +1,63 @@
+{
+  "train_rows": 891,
+  "test_rows": 418,
+  "train_survivors": 342,
+  "train_survival_rate": 0.3838383838383838,
+  "test_predicted_survivors": 168,
+  "test_predicted_survival_rate": 0.4019138755980861,
+  "best_model": "Logistic regression",
+  "metrics": [
+    {
+      "model": "Sex baseline",
+      "accuracy_mean": 0.7867553825874082,
+      "accuracy_std": 0.021027312730864646,
+      "roc_auc_mean": 0.7667246504795486,
+      "roc_auc_std": 0.02610684495756804
+    },
+    {
+      "model": "Logistic regression",
+      "accuracy_mean": 0.8282593685267716,
+      "accuracy_std": 0.01645219592188703,
+      "roc_auc_mean": 0.8784647407935144,
+      "roc_auc_std": 0.009455226253977345
+    },
+    {
+      "model": "Random forest",
+      "accuracy_mean": 0.8361308141359614,
+      "accuracy_std": 0.0093985733016801,
+      "roc_auc_mean": 0.8767481213031321,
+      "roc_auc_std": 0.019928231498407663
+    },
+    {
+      "model": "Gradient boosting",
+      "accuracy_mean": 0.8271608813006088,
+      "accuracy_std": 0.00730051830333473,
+      "roc_auc_mean": 0.8776592688422505,
+      "roc_auc_std": 0.012790126281303767
+    }
+  ],
+  "evaluation": {
+    "confusion_matrix": [
+      [
+        477,
+        72
+      ],
+      [
+        81,
+        261
+      ]
+    ],
+    "oof_accuracy": 0.8282828282828283,
+    "oof_auc": 0.8767855430927045
+  },
+  "new_features": {
+    "Title": "从 Name 提取称谓并将低频称谓合并为 Rare。",
+    "FamilySize": "SibSp + Parch + 1，表示同行家庭规模。",
+    "IsAlone": "FamilySize 是否为 1。",
+    "HasCabin": "Cabin 是否有记录，代理客舱/社会阶层信息。",
+    "FareLog": "log(1 + Fare)，减弱票价右偏。",
+    "TicketPrefix": "从 Ticket 提取字母前缀，表示票号类别。",
+    "AgeBand": "将年龄划分为 Child/School/Teen/Adult/Mature/Senior。",
+    "FamilySizeGroup": "将家庭规模分为 Alone/Small/Medium/Large。"
+  }
+}
