@@ -189,6 +189,102 @@ def plot_eda(train: pd.DataFrame, df: pd.DataFrame) -> None:
     plt.close(fig)
 
 
+def plot_intuitive_insights(train: pd.DataFrame, df: pd.DataFrame) -> None:
+    """Create a reader-friendly summary of the strongest survival patterns."""
+    fig, axes = plt.subplots(2, 3, figsize=(15, 9))
+
+    # (a) Sex and class: the clearest structural split in the data.
+    ax = axes[0, 0]
+    stats = train.groupby(["Pclass", "Sex"], observed=False)["Survived"].mean().unstack()
+    x = np.arange(3)
+    width = 0.36
+    for i, sex in enumerate(["female", "male"]):
+        values = stats[sex].reindex([1, 2, 3]).to_numpy()
+        bars = ax.bar(x + (i - 0.5) * width, values, width, label=sex.title(),
+                      color="#D55E00" if sex == "female" else "#0072B2")
+        for bar, value in zip(bars, values):
+            ax.text(bar.get_x() + bar.get_width() / 2, value + 0.025,
+                    f"{value:.0%}", ha="center", fontsize=8)
+    ax.set_xticks(x, ["1st", "2nd", "3rd"])
+    ax.set_ylim(0, 1.08)
+    ax.set_ylabel("Survival rate")
+    ax.set_title("A. Sex × passenger class")
+    ax.legend(frameon=False)
+    ax.grid(axis="y", alpha=0.2)
+
+    # (b) Name titles: a compact proxy for age, sex, and social status.
+    ax = axes[0, 1]
+    title_stats = df.groupby("Title", observed=False)["Survived"].agg(["mean", "count"])
+    title_stats = title_stats[title_stats["count"] >= 5].sort_values("mean")
+    bars = ax.barh(title_stats.index, title_stats["mean"], color="#59A14F")
+    for bar, (_, row) in zip(bars, title_stats.iterrows()):
+        ax.text(row["mean"] + 0.02, bar.get_y() + bar.get_height() / 2,
+                f"{row['mean']:.0%} (n={int(row['count'])})", va="center", fontsize=8)
+    ax.set_xlim(0, 1.12)
+    ax.set_xlabel("Survival rate")
+    ax.set_title("B. Survival by title")
+    ax.grid(axis="x", alpha=0.2)
+
+    # (c) Age groups: children are visibly different from adults.
+    ax = axes[0, 2]
+    age_stats = df.groupby("AgeBand", observed=False)["Survived"].agg(["mean", "count"]).dropna()
+    age_stats = age_stats.reindex(["Child", "School", "Teen", "Adult", "Mature", "Senior"]).dropna()
+    bars = ax.bar(age_stats.index, age_stats["mean"], color="#E69F00")
+    for bar, (_, row) in zip(bars, age_stats.iterrows()):
+        ax.text(bar.get_x() + bar.get_width() / 2, row["mean"] + 0.025,
+                f"{row['mean']:.0%}\n(n={int(row['count'])})", ha="center", fontsize=8)
+    ax.set_ylim(0, 1.08)
+    ax.set_ylabel("Survival rate")
+    ax.set_title("C. Survival by age group")
+    ax.tick_params(axis="x", rotation=25)
+    ax.grid(axis="y", alpha=0.2)
+
+    # (d) Family size: small groups are generally safer than very large groups.
+    ax = axes[1, 0]
+    family_stats = df.groupby("FamilySizeGroup", observed=False)["Survived"].agg(["mean", "count"])
+    family_stats = family_stats.reindex(["Alone", "Small", "Medium", "Large"]).dropna()
+    bars = ax.bar(family_stats.index, family_stats["mean"], color="#56B4E9")
+    for bar, (_, row) in zip(bars, family_stats.iterrows()):
+        ax.text(bar.get_x() + bar.get_width() / 2, row["mean"] + 0.025,
+                f"{row['mean']:.0%}\n(n={int(row['count'])})", ha="center", fontsize=8)
+    ax.set_ylim(0, 1.08)
+    ax.set_ylabel("Survival rate")
+    ax.set_title("D. Survival by family-size group")
+    ax.grid(axis="y", alpha=0.2)
+
+    # (e) Embarkation port: show both level and uncertainty in sample size.
+    ax = axes[1, 1]
+    port_stats = train.groupby("Embarked", dropna=False)["Survived"].agg(["mean", "count"]).dropna()
+    port_stats = port_stats.reindex(["S", "C", "Q"]).dropna()
+    bars = ax.bar(port_stats.index, port_stats["mean"], color="#CC79A7")
+    for bar, (_, row) in zip(bars, port_stats.iterrows()):
+        ax.text(bar.get_x() + bar.get_width() / 2, row["mean"] + 0.025,
+                f"{row['mean']:.0%}\n(n={int(row['count'])})", ha="center", fontsize=8)
+    ax.set_ylim(0, 1.08)
+    ax.set_ylabel("Survival rate")
+    ax.set_title("E. Survival by embarkation port")
+    ax.set_xticks(range(3), ["S", "C", "Q"])
+    ax.grid(axis="y", alpha=0.2)
+
+    # (f) A simple count view prevents small groups from being overinterpreted.
+    ax = axes[1, 2]
+    counts = train.groupby(["Sex", "Survived"], observed=False).size().unstack(fill_value=0)
+    counts = counts.reindex(["female", "male"])
+    counts.plot(kind="bar", stacked=True, ax=ax, color=["#999999", "#D55E00"],
+                rot=0, legend=False)
+    ax.set_xticklabels(["Female", "Male"])
+    ax.set_xlabel("")
+    ax.set_ylabel("Passengers")
+    ax.set_title("F. Passenger counts by sex")
+    ax.legend(["Not survived", "Survived"], frameon=False, fontsize=8)
+    ax.grid(axis="y", alpha=0.2)
+
+    fig.suptitle("Titanic Survival Patterns at a Glance", y=0.995, fontsize=16)
+    fig.tight_layout()
+    fig.savefig(FIG_DIR / "fig5_intuitive_insights.png", dpi=300, bbox_inches="tight")
+    plt.close(fig)
+
+
 def plot_model_comparison(metrics: pd.DataFrame) -> None:
     fig, axes = plt.subplots(1, 2, figsize=(12, 5.2), sharey=True)
     order = metrics.sort_values("roc_auc_mean")["model"].tolist()
@@ -286,6 +382,7 @@ def main() -> None:
     test_features = add_features(test)
     all_train = add_features(train)
     plot_eda(train, all_train)
+    plot_intuitive_insights(train, all_train)
 
     numeric = ["Pclass", "Age", "SibSp", "Parch", "Fare", "FamilySize", "FareLog"]
     categorical = ["Sex", "Embarked", "Title", "IsAlone", "HasCabin", "TicketPrefix", "AgeBand", "FamilySizeGroup"]
